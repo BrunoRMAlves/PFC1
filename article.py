@@ -21,5 +21,4 @@ class Article:
         #return self.site.find_all("div", class_ ="article-title-and-info", id="anchor-title")
         return  BeautifulSoup(str(self.site.find_all("h1", class_="js-article-title")), "lxml").text
 
-print("Iniciou o programa")
 teste = Article("https://f1000research.com/articles/12-1007", userAgent)

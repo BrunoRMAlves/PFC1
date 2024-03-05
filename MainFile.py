@@ -2,6 +2,7 @@
 
 import requests
 from article import Article
+from collections import defaultdict
 from bs4 import BeautifulSoup
 
 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36"
@@ -22,9 +23,9 @@ class WebScrapperF1000:
         print("Pegou todos os nomes")
         self.articles_links = self.get_articles_url()
         print("Pegou todos os links")
-        self.articles_list = self.get_articles_list()
-        print("Pegou a lista de artigos")
-        self.save_articles()
+        self.articles_dict = self.get_articles_dict()
+        print("Pegou o dict de artigos")
+        self.save_article_text()
 
     def create_request(self, userAgent):
         headers = {"User-Agents": userAgent}
@@ -72,26 +73,23 @@ class WebScrapperF1000:
             self.articles_divs.pop(index)
         print(len(self.articles_divs), "artigos estão disponíveis com suas respectivas revisões")
             
-    def get_articles_list(self):
-        articles = []
-        for link in self.articles_links:
-            articles.append(Article(link, userAgent))
-            print(Article(link, userAgent).get_article_name())
+    def get_articles_dict(self):
+        articles = defaultdict(str)
+        for i in range(len(self.articles_links)):
+            articles.update({str(self.articles_names[i]) : Article(self.articles_links[i], userAgent)}) 
+            print(Article(self.articles_links[i], userAgent).get_article_name())
         return articles
     
-    def save_articles(self):
-        for article in self.articles_list:   
-            self.save_article_text(article)
-    
-    def save_article_text(self, article):
-        name = str("./artigos/"+ (str(article.get_article_name()).replace("/","_").replace("-","_").replace(".","").replace(",","").replace("(","[").replace(")","]")))
-        if len(name)>120:
-            with open((name[0:120] + ".txt"), 'w', encoding="utf-8") as f:
-                f.write(str(article.get_article_content()))
-        else:
-            with open((name + ".txt"), 'w', encoding="utf-8") as f:
-                f.write(str(article.get_article_content()))
-            
+    def save_article_text(self):
+        for key in self.articles_dict.keys():  
+            name = str("./artigos/"+ (BeautifulSoup(str(key), "lxml").text).replace(":","").replace("/","_").replace("-","_").replace(".","").replace(",","").replace("(","[").replace(")","]"))
+            if len(name)>120:
+                with open((name[0:120] + ".txt"), 'w') as f:
+                    f.write(str(self.articles_dict.get(key).get_article_content()))
+            else:
+                with open((name + ".txt"), 'w', encoding="utf-8") as f:
+                    f.write(str(self.articles_dict.get(key).get_article_content()))
+                
         
         
 
@@ -112,3 +110,4 @@ class WebScrapperF1000:
 
 print("Iniciou o programa")
 teste = WebScrapperF1000("https://f1000research.com/browse/articles", userAgent)
+teste.get_articles_dict()
